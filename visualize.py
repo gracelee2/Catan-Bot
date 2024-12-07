@@ -394,12 +394,15 @@ class Visualize:
                 self.game.availableMoves()
                 self.updateHand()
 
-
             if self.game.dieRoll == 7:
                 Seven.rolled(self,self.game.players)
 
             self.updateHand()
             self.game.availableMoves()
+
+            if isinstance(self.game.current_player, Robot):
+                self.game.playerUpdate()
+                self.update_gui_after_robot_move()
 
 
         def enterRoll(event,tag):
@@ -1088,5 +1091,9 @@ class Visualize:
     def update_gui_after_robot_move(self):
         self.updateHand()
         self.updateDevs()
-        self.update_turn_label()
+        self.c.itemconfigure(self.point_counter,
+                            text='Points: ' + str(self.game.current_player.points))
+
+
+
 
