@@ -3,7 +3,7 @@ import math
 from game import Game
 from seven import Seven
 import board
-import player
+#import player
 import random
 from seven import Seven
 
