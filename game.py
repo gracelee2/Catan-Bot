@@ -70,12 +70,25 @@ class Game:
 
 
     def playerUpdate(self):
-        self.playedDev = False
-        self.current_player = self.player_dic[self.order[self.turn % len(self.players)]]
-
+        self.current_player = self.players[self.turn % len(self.players)]
+        self.availableMoves()
+        
+        # Check if the current player is a Robot
         if isinstance(self.current_player, Robot):
-            if self.round > 2:
-                self.current_player.make_decision(self)
+            # The Robot takes all available actions in a random order
+            while True:
+                actions = self.current_player.get_available_actions(self)
+                if not actions:  # If no actions are available, break the loop
+                    break
+                random.shuffle(actions)
+                action = actions.pop()
+                self.current_player.take_action(self, action)
+            
+            # Update GUI and proceed to the next turn
+            self.visualizer.update_gui_after_robot_move()
+            self.turn += 1
+            self.round = self.turn // len(self.players)
+
 
     def availableMoves(self):
         settlements = [[]]
@@ -379,4 +392,6 @@ class Game:
         self.round = self.turn // len(self.players)
         self.current_player = self.players[self.turn % len(self.players)]
         self.availableMoves()  # Recalculate available moves for the new player
+
+
 
