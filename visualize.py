@@ -3,7 +3,8 @@ import math
 from game import Game
 from seven import Seven
 import board
-import player
+from player import Player
+from robot import Robot
 import random
 from seven import Seven
 
@@ -74,6 +75,10 @@ class Visualize:
         root.mainloop()
         if len(players) > 2:
             self.game = Game(players,colors)
+            if isinstance(self.game.current_player, Robot):
+                self.game.current_player.make_decision(self.game)
+                self.update_gui_after_robot_move()
+
         else:
             self.game = Game()
 
@@ -1080,4 +1085,8 @@ class Visualize:
         if len(takers) == 0:
             root.destroy()
 
+    def update_gui_after_robot_move(self):
+        self.updateHand()
+        self.updateDevs()
+        self.update_turn_label()
 

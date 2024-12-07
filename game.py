@@ -1,4 +1,5 @@
 from player import Player
+from robot import Robot
 from board import Board
 from dev_cards import DevelopmentCards
 import random
@@ -6,21 +7,25 @@ import random
 
 class Game:
 
-    def __init__(self, player_names = ['Adam','Rachel','Julia'],
-                 colors = ['Orange','Pink','Blue'], standard_setup=True):
+    def __init__(self, player_names=['Adam', 'Bot1', 'Julia'], colors=['Orange', 'Blue', 'Pink'], standard_setup=True):
+        # Ensure that Bot names correctly initialize as Robot
+        self.players = [
+            Robot(name, 'Purple') if "Bot" in name else Player(name, color)
+            for name, color in zip(player_names, colors)
+        ]
 
         assert len(player_names) == len(colors)
         assert 2 < len(player_names) < 5
 
-        self.players = \
-            [Player(name,color) for name,color in zip(player_names,colors)]
+        # Create a dictionary to map player names to player instances
+        self.player_dic = {player_name: player for player_name, player in zip(player_names, self.players)}
 
-        self.player_dic = {player_name: p for player_name,p in\
-                           zip(player_names,self.players)}
+        # Initialize the board and development cards
         self.board = Board()
         self.devcards = DevelopmentCards()
 
-        self.order = player_names
+        # Shuffle turn order
+        self.order = player_names[:]
         random.shuffle(self.order)
 
         self.turn = 0 #counts the turn number, does not reset between rounds
@@ -66,17 +71,11 @@ class Game:
 
     def playerUpdate(self):
         self.playedDev = False
+        self.current_player = self.player_dic[self.order[self.turn % len(self.players)]]
 
-        if self.round == 1:
-            self.current_player =\
-                self.player_dic[self.order[::-1]\
-                                [self.turn % len(self.players)]]
-
-        else:
-            self.current_player =\
-                self.player_dic[self.order[self.turn % len(self.players)]]
-
-        self.availableMoves()
+        if isinstance(self.current_player, Robot):
+            if self.round > 2:
+                self.current_player.make_decision(self)
 
     def availableMoves(self):
         settlements = [[]]
@@ -372,4 +371,12 @@ class Game:
 
             self.largest_holder = p
 
+    def end_turn(self):
+        """
+        Ends the current player's turn and advances to the next player.
+        """
+        self.turn += 1
+        self.round = self.turn // len(self.players)
+        self.current_player = self.players[self.turn % len(self.players)]
+        self.availableMoves()  # Recalculate available moves for the new player
 
