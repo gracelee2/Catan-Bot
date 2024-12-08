@@ -405,10 +405,16 @@ class Visualize:
             if not self.freeze:
                 c.itemconfigure(roll_box,fill = 'red')
 
-        def clickRoll(event,tag):
+        def clickRoll(event, tag):
             if not self.freeze and not self.rolled:
-                if self.game.round > 1:
-                    nextTurn()
+                self.game.rollDice()
+                self.c.itemconfigure(roll_label,
+                                    text='Roll: ' + str(self.game.dieRoll))
+                self.rolled = True
+                self.updateHand()
+                self.game.availableMoves()
+                self.updateDevs()
+
 
         roll_box = c.create_rectangle(5,1020,135,970,fill = 'red')
         tmp = c.create_text(70,995,fill='black',font =f"Times {int(25 * scale_factor)} bold",
