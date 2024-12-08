@@ -1,102 +1,33 @@
 from player import Player
+from robot import Robot
 from board import Board
 from dev_cards import DevelopmentCards
 import random
-#from handler import getState
 
-from handler import processActions, getState, selectAction, dropCards
-
-class Robot:
-    count = 0
-
-    def __init__(self):
-        self.name = f"Bot_{Robot.count}"
-        Robot.count += 1
-
-    # Evaluate the game state for the AI.
-    def evaluate_state(self, game, depth):
-        player_score = game.current_player.points
-        opponent_scores = [p.points for p in game.players if p != game.current_player]
-        resource_count = sum(game.current_player.hand.values())
-        return player_score - max(opponent_scores) + resource_count * 0.1
-
-    # Perform Alpha-Beta Pruning to find the best move.
-    def alpha_beta_move(self, game, depth, alpha, beta, maximizing_player):
-        if depth == 0 or game.current_player.points >= 10:
-            return self.evaluate_state(game, depth), None
-
-        new_states, actions = processActions(game, getState(game))
-
-        if maximizing_player:
-            max_eval = float('-inf')
-            best_action = None
-            for state, action in zip(new_states, actions):
-                game_copy = Game()  # Simulate game
-                selectAction(game_copy, [state], [action])
-                eval, _ = self.alpha_beta_move(game_copy, depth - 1, alpha, beta, False)
-                if eval > max_eval:
-                    max_eval = eval
-                    best_action = action
-                alpha = max(alpha, eval)
-                if beta <= alpha:
-                    break
-            return max_eval, best_action
-        else:
-            min_eval = float('inf')
-            best_action = None
-            for state, action in zip(new_states, actions):
-                game_copy = Game()  # Simulate game
-                selectAction(game_copy, [state], [action])
-                eval, _ = self.alpha_beta_move(game_copy, depth - 1, alpha, beta, True)
-                if eval < min_eval:
-                    min_eval = eval
-                    best_action = action
-                beta = min(beta, eval)
-                if beta <= alpha:
-                    break
-            return min_eval, best_action
-
-    # Decide and execute the best move.
-    def move(self, game):
-        depth = 3
-        _, best_action = self.alpha_beta_move(game, depth, float('-inf'), float('inf'), True)
-        if best_action:
-            selectAction(game, [None], [best_action])
 
 class Game:
 
-    def __init__(self, player_names = ['Adam','Rachel'], bot_names =['bot1'],
-                 colors = ['Orange','Pink','Blue'], standard_setup=True):
+    def __init__(self, player_names=['Adam', 'Bot1', 'Julia'], colors=['Orange', 'Blue', 'Pink'], standard_setup=True, visualizer=None):
+        self.visualizer = visualizer
+        self.players = [
+            Robot(name, 'Purple') if "Bot" in name else Player(name, color)
+            for name, color in zip(player_names, colors)
+        ]
 
-        all_names = player_names + bot_names
-        all_colors = colors[:len(all_names)]
+        assert len(player_names) == len(colors)
+        assert 2 < len(player_names) < 5
 
-        if len(all_names) != len(all_colors):
-            raise ValueError("The number of players and bots must match the number of colors.")
-        if not (3 <= len(all_names) <= 4):
-            raise ValueError("The total number of players (humans + bots) must be between 3 and 4.")
+        self.player_dic = {player_name: player for player_name, player in zip(player_names, self.players)}
 
-        self.players = []
-        for name, color in zip(player_names, colors[:len(player_names)]):
-            self.players.append(Player(name, color))  # Add human players
-        for bot_name, color in zip(bot_names, colors[len(player_names):]):
-            bot = Robot()
-            bot.name = bot_name  # Set bot's name
-            self.players.append(bot)  # Add bots
-        
-        # Create player dictionary for quick lookup
-        self.player_dic = {player.name: player for player in self.players}
-        
         self.board = Board()
         self.devcards = DevelopmentCards()
 
-        self.order = player_names
+        self.order = player_names[:]
         random.shuffle(self.order)
 
-        self.turn = 0 #counts the turn number, does not reset between rounds
-        self.round = 0 #counts revolutions around the board
-
-        self.lastHouse = [] #used for set up phase
+        self.turn = 0
+        self.round = 0
+        self.lastHouse = []
         self.moves = {}
 
         self.current_player = self.player_dic[self.order[self.turn]]
@@ -108,43 +39,41 @@ class Game:
         self.longest_holder = ''
         self.largest_holder = ''
 
-
     def rollDice(self):
-
-        d1 = random.randint(1,6)
-        d2 = random.randint(1,6)
-
+        d1 = random.randint(1, 6)
+        d2 = random.randint(1, 6)
         self.dieRoll = d1 + d2
 
-        if self.round == 2:
-
-            while self.dieRoll == 7:
-                self.dieRoll = random.randint(1,6) + random.randint(1,6)
-
         for spot in self.board.rollDic.keys():
-
-            if self.board.rollDic[spot] == self.dieRoll and \
-                    not self.board.spots[spot].blocked:
+            if self.board.rollDic[spot] == self.dieRoll and not self.board.spots[spot].blocked:
                 for vertex in self.board.spots[spot].vertices:
                     if self.board.vertices[vertex[0]][vertex[1]].owner:
-                        self.board.vertices[vertex[0]][vertex[1]]\
-                            .owner.hand[self.board.spots[spot]\
-                                        .resource.lower()] +=\
-                        self.board.vertices[vertex[0]][vertex[1]].val
-
-
+                        self.board.vertices[vertex[0]][vertex[1]].owner.hand[
+                            self.board.spots[spot].resource.lower()] += \
+                            self.board.vertices[vertex[0]][vertex[1]].val
 
     def playerUpdate(self):
-        self.playedDev = False
-        if self.round == 1:
-                self.current_player =\
-                    self.player_dic[self.order[::-1]\
-                                [self.turn % len(self.players)]]
+        self.current_player = self.players[self.turn % len(self.players)]
+        self.availableMoves()
 
-        else:
-                self.current_player =\
-                    self.player_dic[self.order[self.turn % len(self.players)]]
-                self.availableMoves()
+        if isinstance(self.current_player, Robot):
+            while True:
+                actions = self.current_player.get_available_actions(self)
+                if not actions:
+                    break
+                random.shuffle(actions)
+                action = actions.pop()
+                self.current_player.take_action(self, action)
+            
+            if self.visualizer:
+                self.visualizer.update_gui_after_robot_move()
+            self.turn += 1
+            self.round = self.turn // len(self.players)
+
+    def availableMoves(self):
+        # Logic for available moves
+        pass
+
 
     def availableMoves(self):
         settlements = [[]]
@@ -439,4 +368,14 @@ class Game:
                     player.largest_army = False
 
             self.largest_holder = p
+
+    def end_turn(self):
+        """
+        Ends the current player's turn and advances to the next player.
+        """
+        self.turn += 1
+        self.round = self.turn // len(self.players)
+        self.current_player = self.players[self.turn % len(self.players)]
+        self.availableMoves()  # Recalculate available moves for the new player
+
 

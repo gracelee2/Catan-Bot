@@ -3,7 +3,8 @@ import math
 from game import Game
 from seven import Seven
 import board
-#import player
+from player import Player
+from robot import Robot
 import random
 from seven import Seven
 
@@ -11,71 +12,81 @@ from seven import Seven
 class Visualize:
 
     def __init__(self):
-        self.game = None
+        #players, colors = self.setUp()  # Get players and colors from setup
+        self.game = Game(visualizer=self)
         self.freeze = False
         self.robber_move = False
         self.rolled = True
-        self.setUp() #initializes game
-        self.playGame()
         self.hand = None
         self.devs = None
         self.c = None
         self.point_counter = 0
         self.current_robber = None
+        self.playGame()  # Start the game
+
 
 
     """Creates a small window to obtain user input
     of the names of players and their desired colors"""
 
-    def setUp(self):
-        root = Tk()
-        root.title('Settlers of Catan')
+    # def setUp(self):
+    #     root = Tk()
+    #     root.title('Settlers of Catan')
 
-        n_players = 0
-        players = []
-        colors = []
+    #     #n_players = 0
+    #     players = []
+    #     colors = []
 
-        def addInput():
-            players.append(e1.get())
-            colors.append(e2.get())
-            e1.delete(0,END)
-            e2.delete(0,END)
+    #     def addInput():
+    #         players.append(e1.get())
+    #         colors.append(e2.get())
+    #         e1.delete(0,END)
+    #         e2.delete(0,END)
 
-        def destroy():
-            n_name = e1.get()
-            color = e2.get()
-            if len(n_name) > 0:
+    #     def destroy():
+    #         n_name = e1.get()
+    #         color = e2.get()
+    #         if len(n_name) > 0:
 
-                players.append(n_name)
-                colors.append(color)
-            root.destroy()
+    #             players.append(n_name)
+    #             colors.append(color)
+    #         root.destroy()
 
+    #     Label(root,
+    #              text="Name").grid(row=0)
+    #     Label(root,
+    #              text="Color").grid(row=1)
 
+    #     e1 = Entry(root)
+    #     e2 = Entry(root)
 
-        Label(root,
-                 text="Name").grid(row=0)
-        Label(root,
-                 text="Color").grid(row=1)
-
-        e1 = Entry(root)
-        e2 = Entry(root)
-
-        e1.grid(row=0, column=1)
-        e2.grid(row=1, column=1)
-        Button(root,text='Enter',command=addInput)\
-            .grid(row=2,column=0,sticky=W)
-        Button(root,
-                  text='Start Game',
-                  command=destroy).grid(row=2,
-                                            column=1,
-                                            sticky=W)
+    #     e1.grid(row=0, column=1)
+    #     e2.grid(row=1, column=1)
+    #     Button(root,text='Enter',command=addInput)\
+    #         .grid(row=2,column=0,sticky=W)
+    #     Button(root,
+    #               text='Start Game',
+    #               command=destroy).grid(row=2,
+    #                                         column=1,
+    #                                         sticky=W)
 
 
-        root.mainloop()
-        if len(players) > 2:
-            self.game = Game(players,colors)
-        else:
-            self.game = Game()
+    #     root.mainloop()
+        
+    #     if len(players) < 3:
+    #         raise ValueError("At least 3 players are required to start the game.")
+    #     if len(players) > 4:
+    #         raise ValueError("The game supports a maximum of 4 players.")
+        
+    #     return players, colors
+        # if len(players) > 2:
+        #     self.game = Game(players,colors)
+        #     if isinstance(self.game.current_player, Robot):
+        #         self.game.current_player.make_decision(self.game)
+        #         self.update_gui_after_robot_move()
+
+        # else:
+        #     self.game = Game()
 
     def playGame(self):
 
@@ -389,12 +400,15 @@ class Visualize:
                 self.game.availableMoves()
                 self.updateHand()
 
-
             if self.game.dieRoll == 7:
                 Seven.rolled(self,self.game.players)
 
             self.updateHand()
             self.game.availableMoves()
+
+            if isinstance(self.game.current_player, Robot):
+                self.game.playerUpdate()
+                self.update_gui_after_robot_move()
 
 
         def enterRoll(event,tag):
@@ -572,25 +586,32 @@ class Visualize:
             return [[el[0]+x+center[0],el[1]+y+center[1]]
                     for el in points]
 
+        def availableMoves(self):
+        # Existing logic
+            print("Settlements structure:", self.moves.get('settlements'))
+    
+        def buyHouse(event, tag):
+            index = settlements_to_vertices[tag]
+            print(f"Index for tag {tag}: {index}")
+            if index[0] < len(self.game.moves['settlements']) and index[1] < len(self.game.moves['settlements'][index[0]]):
+                if self.game.moves['settlements'][index[0]][index[1]]:
+                    c.itemconfigure(tag, fill=self.game.current_player.color, outline='black')
+                    boughtHomes.add(tag)
+                    self.game.buySettlement(self.game.current_player.name, index)
+                    self.game.availableMoves()
+                    self.updateHand()
+                    c.tag_raise(house_to_city[tag])
+            else:
+                print(f"Invalid index: {index}")
 
-        def buyHouse(event,tag):
-            index =  settlements_to_vertices[tag]
-            if self.game.moves['settlements'][index[0]][index[1]] and \
-                    not self.freeze and self.rolled:
-                c.itemconfigure(tag,fill=self.game.current_player.color,
-                                outline='black')
-                boughtHomes.add(tag)
-                self.game.buySettlement(self.game.current_player.name,
-                                        index)
-                self.game.availableMoves()
-                self.updateHand()
-                c.tag_raise(house_to_city[tag])
-
-        def enterHouse(event,tag):
-            index =  settlements_to_vertices[tag]
-            if self.game.moves['settlements'][index[0]][index[1]] and\
-                    not self.freeze and self.rolled:
-                c.itemconfigure(tag,fill='#D3D3D3')
+        def enterHouse(event, tag):
+            index = settlements_to_vertices[tag]
+            print(f"Index for tag {tag}: {index}")
+            if index[0] < len(self.game.moves['settlements']) and index[1] < len(self.game.moves['settlements'][index[0]]):
+                if self.game.moves['settlements'][index[0]][index[1]]:
+                    c.itemconfigure(tag, fill='#D3D3D3')
+            else:
+                print(f"Invalid index: {index}")
 
         def leaveHouse(event,tag):
             if tag not in boughtHomes:
@@ -1080,4 +1101,8 @@ class Visualize:
         if len(takers) == 0:
             root.destroy()
 
-
+    def update_gui_after_robot_move(self):
+        self.updateHand()
+        self.updateDevs()
+        self.c.itemconfigure(self.point_counter,
+                            text='Points: ' + str(self.game.current_player.points))
