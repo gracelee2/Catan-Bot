@@ -95,7 +95,7 @@ class Game:
             self.buyCity(player.name, action[1])
         elif action[0] == 'dev_card':
             self.buyDev()
-            
+
     def playerUpdate(self):
         """Switch to the next player and handle their actions."""
         self.playedDev = False

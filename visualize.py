@@ -386,32 +386,94 @@ class Visualize:
         roll_label = c.create_text(525,825,fill='black',
                                    font =f"Times {int(25 * scale_factor)} bold",
                                    text = 'Roll: '+ str(self.game.dieRoll))
+        # def firstTurn():
+        #     """Trigger a bot's action and visually simulate it."""
+        #     if isinstance(self.game.current_player, Robot) and not self.freeze:
+        #         action = self.game.current_player.take_action(self.game)
+        #         print(f"Bot Action: {action}")
+        #         try:
+        #             if action[0] == 'settlement':
+        #                 tag = next(k for k, v in self.settlements_to_vertices.items() if v == action[1])
+        #                 coords = self.c.coords(tag)
+        #                 x = sum(coords[::2]) / (len(coords) // 2)
+        #                 y = sum(coords[1::2]) / (len(coords) // 2)
+        #                 print(f"Simulating settlement click at: ({x}, {y})")
+        #                 self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+        #             elif action[0] == 'road':
+        #                 tag = next(k for k, v in self.roads_to_edges.items() if v == action[1])
+        #                 coords = self.c.coords(tag)
+        #                 x = sum(coords[::2]) / (len(coords) // 2)
+        #                 y = sum(coords[1::2]) / (len(coords) // 2)
+        #                 print(f"Simulating road click at: ({x}, {y})")
+        #                 self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+        #                 print("Invalid action.")
+        #         except Exception as e:
+        #             print(f"Error in handleBotAction: {e}")
+
+        #         self.updateHand()
+        #         self.updateDevs()
+
 
         def nextTurn():
-            if self.game.round > 1:
+            if self.game.round < 1: 
+                self.handleFirstRoundSetup()
+            else:
                 self.game.rollDice()
                 c.itemconfigure(roll_label,
                                 text='Roll: ' + str(self.game.dieRoll))
                 self.rolled = True
-
+                self.game.availableMoves()
+                self.updateHand()
                 # If the current player is a bot, trigger its action
                 if isinstance(self.game.current_player, Robot):
                     self.handleBotAction()
-            else:
-                self.rolled = True
-                self.game.playerUpdate()
-                self.updateDevs()
-                c.itemconfigure(turn_label,
-                                text=self.game.current_player.name + "'s Turn")
-                self.game.availableMoves()
+                else:
+                    self.rolled = True
+                    self.game.playerUpdate()
+                    self.updateDevs()
+                    c.itemconfigure(turn_label,
+                                    text=self.game.current_player.name + "'s Turn")
+                    self.game.availableMoves()
+                    self.updateHand()
+
+                if self.game.dieRoll == 7:
+                    Seven.rolled(self, self.game.players)
+
                 self.updateHand()
+                self.game.availableMoves()
 
-            if self.game.dieRoll == 7:
-                Seven.rolled(self, self.game.players)
+        def handleFirstRoundSetup(self):
+            """Handles the first-round setup for bots and simulates button clicks."""
+            if isinstance(self.game.current_player, Robot):
+                print(f"{self.game.current_player.name} is placing initial settlement and road.")
 
-            self.updateHand()
-            self.game.availableMoves()
+                # Get AI actions
+                actions = self.game.current_player.get_valid_actions(self.game)
+                settlement_action = next((a for a in actions if a[0] == 'settlement'), None)
+                road_action = next((a for a in actions if a[0] == 'road'), None)
 
+                # Simulate settlement placement
+                if settlement_action:
+                    tag = next(k for k, v in self.settlements_to_vertices.items() if v == settlement_action[1])
+                    coords = self.c.coords(tag)
+                    x = sum(coords[::2]) / (len(coords) // 2)
+                    y = sum(coords[1::2]) / (len(coords) // 2)
+                    print(f"Simulating settlement click at: ({x}, {y})")
+                    self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+
+                # Simulate road placement
+                if road_action:
+                    tag = next(k for k, v in self.roads_to_edges.items() if v == road_action[1])
+                    coords = self.c.coords(tag)
+                    x = sum(coords[::2]) / (len(coords) // 2)
+                    y = sum(coords[1::2]) / (len(coords) // 2)
+                    print(f"Simulating road click at: ({x}, {y})")
+                    self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+
+                # Update game turn
+                self.game.turn += 1
+                self.game.round = self.game.turn // len(self.game.players)
+        
 
         def enterRoll(event,tag):
             if not self.freeze and not self.rolled:
