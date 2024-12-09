@@ -40,6 +40,62 @@ class Game:
         self.longest_holder = ''
         self.largest_holder = ''
 
+    def clone(self):
+        """Create a deep copy of the game state."""
+        import copy
+        return copy.deepcopy(self)
+
+    def is_action_valid(self, player, action):
+        """Check if the action is valid in the current game state."""
+        if action[0] == 'settlement':
+            return self.is_settlement_valid(player, action[1])
+        elif action[0] == 'road':
+            return self.is_road_valid(player, action[1])
+        elif action[0] == 'city':
+            return self.is_city_valid(player, action[1])
+        elif action[0] == 'dev_card':
+            return self.is_dev_card_valid(player)
+        return False
+
+    def is_settlement_valid(self, player, coordinates):
+        """Check if a settlement can be placed at the given coordinates."""
+        # Example logic: Check resources and if the spot is available
+        return (
+            coordinates in self.board.availableVertices and
+            player.hand['wheat'] > 0 and
+            player.hand['sheep'] > 0 and
+            player.hand['brick'] > 0 and
+            player.hand['wood'] > 0
+        )
+
+    def is_road_valid(self, player, road):
+        """Check if a road can be placed at the given coordinates."""
+        return road in self.board.availableEdges and player.hand['wood'] > 0 and player.hand['brick'] > 0
+
+    def is_city_valid(self, player, coordinates):
+        """Check if a city can be upgraded at the given coordinates."""
+        vertex = self.board.vertices[coordinates[0]][coordinates[1]]
+        return vertex.owner == player and vertex.val == 1 and player.hand['wheat'] > 1 and player.hand['ore'] > 2
+
+    def is_dev_card_valid(self, player):
+        """Check if a development card can be bought."""
+        return len(self.devcards.cards) > 0 and player.hand['wheat'] > 0 and player.hand['ore'] > 0 and player.hand['sheep'] > 0
+
+    def apply_action(self, player, action):
+        """Apply an action to the game state if valid."""
+        if not self.is_action_valid(player, action):
+            print(f"Invalid action attempted: {action}")
+            return
+
+        if action[0] == 'settlement':
+            self.buySettlement(player.name, action[1])
+        elif action[0] == 'road':
+            self.buyRoad(player.name, action[1])
+        elif action[0] == 'city':
+            self.buyCity(player.name, action[1])
+        elif action[0] == 'dev_card':
+            self.buyDev()
+            
     def playerUpdate(self):
         """Switch to the next player and handle their actions."""
         self.playedDev = False
