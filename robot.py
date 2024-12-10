@@ -138,23 +138,23 @@ class Robot(Player):
             actions.append(('dev_card', None))
 
         return actions
-    def first_Turn(self, game):
-        """
-        Perform the robot's first turn by placing a settlement and a road.
-        """
-        # Get valid settlement and road actions
-        actions = self.get_valid_actions(game)
-        settlement_actions = [action for action in actions if action[0] == 'settlement']
-        road_actions = [action for action in actions if action[0] == 'road']
+    # def first_Turn(self, game):
+    #     """
+    #     Perform the robot's first turn by placing a settlement and a road.
+    #     """
+    #     # Get valid settlement and road actions
+    #     actions = self.get_valid_actions(game)
+    #     settlement_actions = [action for action in actions if action[0] == 'settlement']
+    #     road_actions = [action for action in actions if action[0] == 'road']
 
-        # Place settlement
-        if settlement_actions:
-            settlement_action = settlement_actions[0]  # Choose the first valid settlement action
-            game.buySettlement(self.name, settlement_action[1])
-            print(f"{self.name} placed a settlement at {settlement_action[1]}.")
+    #     # Place settlement
+    #     if settlement_actions:
+    #         settlement_action = settlement_actions[0]  # Choose the first valid settlement action
+    #         game.buySettlement(self.name, settlement_action[1])
+    #         print(f"{self.name} placed a settlement at {settlement_action[1]}.")
 
-        # Place road
-        if road_actions:
-            road_action = road_actions[0]  # Choose the first valid road action
-            game.buyRoad(self.name, road_action[1])
-            print(f"{self.name} placed a road at {road_action[1]}.")
+    #     # Place road
+    #     if road_actions:
+    #         road_action = road_actions[0]  # Choose the first valid road action
+    #         game.buyRoad(self.name, road_action[1])
+    #         print(f"{self.name} placed a road at {road_action[1]}.")
