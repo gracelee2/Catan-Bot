@@ -405,7 +405,7 @@ class Visualize:
                                 text=self.game.current_player.name + "'s Turn")
                 self.game.availableMoves()
                 self.updateHand()
-                #self.handleBotAction()
+                self.handleBotAction()
 
             if self.game.dieRoll == 7:
                 Seven.rolled(self, self.game.players)
@@ -782,6 +782,7 @@ class Visualize:
                     y = sum(coords[1::2]) / (len(coords) // 2)
                     print(f"Simulating road click at: ({x}, {y})")
                     self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+                    self.game.buyRoad(self.game.current_player.name, action[1])
                 elif action[0] == 'city':
                     # Simulate clicking a city
                     tag = next(k for k, v in self.cities_to_vertices.items() if v == action[1])
@@ -798,13 +799,21 @@ class Visualize:
                 elif action[0] == 'use_dev_card':
                     # Simulate using a development card
                     if action[1] == 'knight':
+                        print("Simulating knight card action.")
                         coords = self.c.bbox(self.devs['knight'])
+                        self.c.event_generate('<Button-1>', x=(coords[0] + coords[2]) // 2, y=(coords[1] + coords[3]) // 2)
                     elif action[1] == 'monopoly':
+                        print("Simulating monopoly card action.")
                         coords = self.c.bbox(self.devs['monopoly'])
+                        self.c.event_generate('<Button-1>', x=(coords[0] + coords[2]) // 2, y=(coords[1] + coords[3]) // 2)
+                        least_resource = min(self.hand, key=self.hand.get)
+                        print(f"Bot chooses {least_resource} as the monopoly resource.")
                     elif action[1] == 'road_builder':
                         coords = self.c.bbox(self.devs['road_builder'])
                     elif action[1] == 'year_of_plenty':
                         coords = self.c.bbox(self.devs['year_of_plenty'])
+                        least_resource = min(self.hand, key=self.hand.get)
+                        print(f"Bot chooses {least_resource} as the monopoly resource.")
                     else:
                         print("Invalid dev card action.")
                         return
@@ -917,7 +926,6 @@ class Visualize:
             root.mainloop()
 
     def monopolize(self):
-
         root = Tk()
 
         brick = Button(root,text='Brick',command = lambda r = 'brick': takeResource(r))
@@ -1033,8 +1041,8 @@ class Visualize:
             self.offerTrade(n_give,n_take)
 
 
-        Label(root,text="Want I want to give").grid(row=0,column=0, columnspan = 2)
-        Label(root,text="Want I want to give").grid(row=0, column = 2, columnspan=2)
+        Label(root,text="What I want to give").grid(row=0,column=0, columnspan = 2)
+        Label(root,text="What I want").grid(row=0, column = 2, columnspan=2)
 
         Label(root,
                  text="Brick").grid(row=1)
