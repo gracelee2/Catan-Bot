@@ -1,51 +1,81 @@
 from player import Player
-import random
 import math
+import random
+
 
 class Robot(Player):
     def __init__(self, name="Bot"):
-        super().__init__(name, "Purple")
-        self.is_bot = True  # Additional flag to identify a bot player
+        # Determine the bot's color based on its name
+        colors = {
+            "1": "Purple",
+            "2": "Green",
+            "3": "Blue",
+            "4": "Red"
+        }
+        assigned_color = "Gray"  # Default color if no match found
+        for key, color in colors.items():
+            if key in name:
+                assigned_color = color
+                break
+        
+        super().__init__(name, assigned_color)
+        self.is_bot = True
 
     def take_action(self, game):
         """
-        Use Alpha-Beta Pruning to decide the best action during the bot's turn.
+        Decide the best action during the bot's turn using Alpha-Beta Pruning.
+        Prefer building roads in segments of 2 extending from settlements.
         """
-        moves = game.moves
-        actions = []
-
-        if 'settlements' in moves:
-            actions += [('settlement', (i, q)) for i, row in enumerate(moves['settlements']) for q, valid in enumerate(row) if valid]
-        if 'roads' in moves:
-            actions += [('road', road) for road in moves['roads']]
-        if 'cities' in moves:
-            actions += [('city', (i, q)) for i, row in enumerate(moves['cities']) for q, valid in enumerate(row) if valid]
-        if moves.get('dev_card', False):
-            actions.append(('dev_card', None))
+        actions = self.get_valid_actions(game)
 
         # If no actions are available
         if not actions:
             return ('no_action', None)
+        
 
+        if game.round < 2:  # Assuming round < 1 indicates the setup phase
+            # Filter out edge settlement locations
+            filtered_actions = [
+                action for action in actions
+                if action[0] != 'settlement' or not self.is_edge_settlement(action[1], game)
+            ]
+
+            # If no non-edge settlement actions are available, fall back to all actions
+            if filtered_actions:
+                actions = filtered_actions
+
+            # Choose a random action from the filtered list
+            chosen_action = random.choice(actions)
+            print(f"{self.name} chose random action during setup: {chosen_action}")
+            return chosen_action
+        
         # Perform Alpha-Beta Pruning to choose the best action
-        best_action, _ = self.alpha_beta(game, depth=3, alpha=-math.inf, beta=math.inf, maximizing_player=True, valid_actions=actions)
+        best_action, _ = self.alpha_beta(
+            game, depth=3, alpha=-math.inf, beta=math.inf, maximizing_player=True, valid_actions=actions
+        )
 
-        # Execute the chosen action
-        if best_action[0] == 'settlement':
-            print("The Bot Built a Settlement!")
-        elif best_action[0] == 'road':
-            print("The Bot Built a Road!")
+        # Log and return the chosen action
+        if best_action[0] == 'road':
+            print(f"The Bot chose to build a road at: {best_action[1]}")
+        elif best_action[0] == 'settlement':
+            print(f"The Bot chose to build a settlement at: {best_action[1]}")
         elif best_action[0] == 'city':
-            print("The Bot Built a City!")
+            print(f"The Bot chose to build a city at: {best_action[1]}")
         elif best_action[0] == 'dev_card':
             game.buyDev()
-            print("The Bot Built a Dev Card!")
+            print("The Bot chose to buy a development card.")
+        elif best_action[0] == 'use_dev_card':
+            print(f"The Bot chose to use a development card: {best_action[1]}")
+        elif best_action[0] == 'trade_in':
+            print(f"The Bot chose to trade in: {best_action[1]}")
+        else:
+            print(f"The Bot chose action: {best_action}")
 
         return best_action
 
     def alpha_beta(self, game, depth, alpha, beta, maximizing_player, valid_actions):
         """
-        Alpha-Beta Pruning algorithm to evaluate the best action.
+        Alpha-Beta Pruning to evaluate the best action.
         """
         if depth == 0 or not valid_actions:
             return None, self.evaluate_game_state(game)
@@ -93,8 +123,7 @@ class Robot(Player):
         """
         Evaluate the current game state and return a score.
         """
-        # A simple heuristic based on points and resources
-        return self.points + sum(self.hand.values()) * 0.1
+        return self.points + sum(self.hand.values()) * 0.1 + len(self.roads) * 0.5
 
     def simulate_action(self, game, action):
         """
@@ -105,60 +134,92 @@ class Robot(Player):
 
         try:
             if action[0] == 'settlement':
-                if action[1] in new_game.moves['settlements']:
-                    new_game.buySettlement(self.name, action[1])
+                new_game.buySettlement(self.name, action[1])
             elif action[0] == 'road':
-                if action[1] in new_game.moves['roads']:
-                    new_game.buyRoad(self.name, action[1])
+                new_game.buyRoad(self.name, action[1])
             elif action[0] == 'city':
-                if action[1] in new_game.moves['cities']:
-                    new_game.buyCity(self.name, action[1])
-            elif action[0] == 'dev_card' and new_game.moves.get('dev_card', False):
+                new_game.buyCity(self.name, action[1])
+            elif action[0] == 'dev_card':
                 new_game.buyDev()
-        except KeyError as e:
-            print(f"Simulation error: {e} - Action {action} might not be valid anymore.")
         except Exception as e:
-            print(f"Unexpected error during simulation: {e}")
+            print(f"Checking Roads: {e}")
         return new_game
 
     def get_valid_actions(self, game):
         """
         Generate valid actions for the current game state.
         """
-        moves = game.moves
         actions = []
 
-        if 'settlements' in moves:
-            actions += [('settlement', (i, q)) for i, row in enumerate(moves['settlements']) for q, valid in enumerate(row) if valid]
-        if 'roads' in moves:
-            actions += [('road', road) for road in moves['roads']]
-        if 'cities' in moves:
-            actions += [('city', (i, q)) for i, row in enumerate(moves['cities']) for q, valid in enumerate(row) if valid]
-        if moves.get('dev_card', False):
+        # Add settlement actions
+        if 'settlements' in game.moves:
+            actions += [('settlement', (i, q)) for i, row in enumerate(game.moves['settlements']) for q, valid in enumerate(row) if valid]
+
+        # Add road actions with prioritization
+        if 'roads' in game.moves:
+            actions += [('road', road) for road in self.prioritize_roads(game)]
+
+        # Add city actions
+        if 'cities' in game.moves:
+            actions += [('city', (i, q)) for i, row in enumerate(game.moves['cities']) for q, valid in enumerate(row) if valid]
+
+        # Add dev card purchase
+        if game.moves.get('dev_card', False):
             actions.append(('dev_card', None))
 
+        if self.can_trade_in():
+            actions.append(('trade_in', None))
+
+        # Add dev card usage
+        actions += self.get_dev_card_usage_actions(game)
+
         return actions
-    # def first_Turn(self, game):
-    #     """
-    #     Perform the robot's first turn by placing a settlement and a road.
-    #     """
-    #     # Get valid settlement and road actions
-    #     actions = self.get_valid_actions(game)
-    #     settlement_actions = [action for action in actions if action[0] == 'settlement']
-    #     road_actions = [action for action in actions if action[0] == 'road']
 
-    #     # Place settlement
-    #     if settlement_actions:
-    #         settlement_action = settlement_actions[0]  # Choose the first valid settlement action
-    #         game.buySettlement(self.name, settlement_action[1])
-    #         print(f"{self.name} placed a settlement at {settlement_action[1]}.")
+    def prioritize_roads(self, game):
+        """
+        Prioritize roads to extend from settlements and form segments of 2.
+        """
+        prioritized_roads = []
 
-    #     # Place road
-    #     if road_actions:
-    #         road_action = road_actions[0]  # Choose the first valid road action
-    #         game.buyRoad(self.name, road_action[1])
-<<<<<<< Updated upstream
-    #         print(f"{self.name} placed a road at {road_action[1]}.")
-=======
-    #         print(f"{self.name} placed a road at {road_action[1]}.")
->>>>>>> Stashed changes
+        for road in game.moves.get('roads', []):
+            # Check if the road connects to a settlement or extends an existing road segment
+            for vertex in road:
+                if any(vertex == settlement for settlement in self.settlements) or \
+                        any(vertex in edge for edge in self.roads):
+                    prioritized_roads.append(road)
+
+        return prioritized_roads
+    
+    def can_trade_in(self):
+        """
+        Check if the bot has 4 or more of any resource type to enable a trade-in action.
+        """
+        return any(count >= 4 for count in self.hand.values())
+
+
+    def get_dev_card_usage_actions(self, game):
+        """
+        Generate a list of actions for using dev cards.
+        """
+        dev_card_actions = []
+        if self.knight > 0 and not game.playedDev:
+            dev_card_actions.append(('use_dev_card', 'knight'))
+        if self.monopoly > 0 and not game.playedDev:
+            dev_card_actions.append(('use_dev_card', 'monopoly'))
+        if self.road_builder > 0 and not game.playedDev:
+            dev_card_actions.append(('use_dev_card', 'road_builder'))
+        if self.year_of_plenty > 0 and not game.playedDev:
+            dev_card_actions.append(('use_dev_card', 'year_of_plenty'))
+        return dev_card_actions
+    
+    def is_edge_settlement(self, settlement, game):
+        """
+        Check if a settlement location is on the edge of the board.
+        """
+        i, j = settlement
+        # Check if the settlement is on the edge (top/bottom row or left/right column)
+        max_rows = len(game.board.vertices)
+        max_cols = len(game.board.vertices[0])
+
+        return i == 0 or i == max_rows - 1 or j == 0 or j == max_cols - 1
+

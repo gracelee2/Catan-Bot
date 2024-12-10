@@ -36,6 +36,7 @@ class Visualize:
         self.point_counter = 0
         self.current_robber = None
         self.game.visualize = self
+        
 
 
     """Creates a small window to obtain user input
@@ -102,7 +103,7 @@ class Visualize:
         spots = [self.game.board.spots[i].resource for i in range(1,20)]
         colors = {'Ore':'grey','Wheat':'yellow','Brick':'red',
                   'Wood':'#228B22','Desert':'tan','Sheep':'#90EE90'}
-
+        
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
 
@@ -194,8 +195,7 @@ class Visualize:
             c.tag_bind(tile_to_knight[t][0],'<Button-1>',lambda event,
                        tag = t: clickTile(tag))
 
-
-
+            
         def enterTile(tag):
             if self.freeze and self.robber_move:
                 c.itemconfigure(tile_to_knight[tag][0],fill='black')
@@ -291,7 +291,7 @@ class Visualize:
                         font=f"Times {int(25 * scale_factor)} bold", text='Wood: '+ \
                         str(self.game.current_player.hand['wood']),
                                           anchor='e')
-
+        
 
         #development cards
         c.create_text(900,82e5,fill='black',font=f"Times {int(25 * scale_factor)} bold",
@@ -386,105 +386,45 @@ class Visualize:
         roll_label = c.create_text(525,825,fill='black',
                                    font =f"Times {int(25 * scale_factor)} bold",
                                    text = 'Roll: '+ str(self.game.dieRoll))
-        # def firstTurn():
-        #     """Trigger a bot's action and visually simulate it."""
-        #     if isinstance(self.game.current_player, Robot) and not self.freeze:
-        #         action = self.game.current_player.take_action(self.game)
-        #         print(f"Bot Action: {action}")
-        #         try:
-        #             if action[0] == 'settlement':
-        #                 tag = next(k for k, v in self.settlements_to_vertices.items() if v == action[1])
-        #                 coords = self.c.coords(tag)
-        #                 x = sum(coords[::2]) / (len(coords) // 2)
-        #                 y = sum(coords[1::2]) / (len(coords) // 2)
-        #                 print(f"Simulating settlement click at: ({x}, {y})")
-        #                 self.c.event_generate('<Button-1>', x=int(x), y=int(y))
-        #             elif action[0] == 'road':
-        #                 tag = next(k for k, v in self.roads_to_edges.items() if v == action[1])
-        #                 coords = self.c.coords(tag)
-        #                 x = sum(coords[::2]) / (len(coords) // 2)
-        #                 y = sum(coords[1::2]) / (len(coords) // 2)
-        #                 print(f"Simulating road click at: ({x}, {y})")
-        #                 self.c.event_generate('<Button-1>', x=int(x), y=int(y))
-        #                 print("Invalid action.")
-        #         except Exception as e:
-        #             print(f"Error in handleBotAction: {e}")
-
-        #         self.updateHand()
-        #         self.updateDevs()
-
 
         def nextTurn():
-            # if self.game.round < 1: 
-            #     handleFirstRoundSetup()
             if self.game.round > 1:
                 self.game.rollDice()
                 c.itemconfigure(roll_label,
                                 text='Roll: ' + str(self.game.dieRoll))
                 self.rolled = True
+
                 # If the current player is a bot, trigger its action
                 if isinstance(self.game.current_player, Robot):
                     self.handleBotAction()
-                else:
-                    self.rolled = True
-                    self.game.playerUpdate()
-                    self.updateDevs()
-                    c.itemconfigure(turn_label,
-                                    text=self.game.current_player.name + "'s Turn")
-                    self.game.availableMoves()
-                    self.updateHand()
-                    self.handleBotAction()
-
-                if self.game.dieRoll == 7:
-                    Seven.rolled(self, self.game.players)
-
-                self.updateHand()
-<<<<<<< Updated upstream
+            else:
+                self.rolled = True
+                self.game.playerUpdate()
+                self.updateDevs()
+                c.itemconfigure(turn_label,
+                                text=self.game.current_player.name + "'s Turn")
                 self.game.availableMoves()
-
-        # def handleFirstRoundSetup():
-        #     """Handles the first-round setup for bots and simulates button clicks."""
-        #     if isinstance(self.game.current_player, Robot):
-        #         print(f"{self.game.current_player.name} is placing initial settlement and road.")
-
-        #         # Get AI actions
-        #         actions = self.game.current_player.get_valid_actions(self.game)
-        #         settlement_action = next((a for a in actions if a[0] == 'settlement'), None)
-        #         road_action = next((a for a in actions if a[0] == 'road'), None)
-=======
+                self.updateHand()
+                self.handleBotAction()
                 self.handleBotAction()
 
-                if self.game.dieRoll == 7:
-                    Seven.rolled(self, self.game.players)
+            if self.game.dieRoll == 7:
+                if isinstance(self.game.current_player, Robot):
+                    catan_tiles = [
+                    (6, 'wood'), (8, 'brick'), (2, 'grain'), (5, 'brick'),
+                    (4, 'wood'), (5, 'ore'), (9, 'grain'), (4, 'brick'),
+                    (9, 'sheep'), (11, 'wood'), (10, 'sheep'), (3, 'wood'),
+                    (6, 'ore'), (8, 'grain'), (12, 'sheep'), (3, 'ore'),
+                    (10, 'sheep'), (11, 'grain')
+                ]
+                    random_tile = random.choice(catan_tiles)
+                    print(f"Random tile chosen: Number {random_tile[0]} with resource {random_tile[1]}")
 
-                self.updateHand()
-                self.game.availableMoves()
->>>>>>> Stashed changes
+                Seven.rolled(self, self.game.players)
 
-        #         # Simulate settlement placement
-        #         if settlement_action:
-        #             tag = next(k for k, v in self.settlements_to_vertices.items() if v == settlement_action[1])
-        #             coords = self.c.coords(tag)
-        #             x = sum(coords[::2]) / (len(coords) // 2)
-        #             y = sum(coords[1::2]) / (len(coords) // 2)
-        #             print(f"Simulating settlement click at: ({x}, {y})")
-        #             self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+            self.updateHand()
+            self.game.availableMoves()
 
-        #         # Simulate road placement
-        #         if road_action:
-        #             tag = next(k for k, v in self.roads_to_edges.items() if v == road_action[1])
-        #             coords = self.c.coords(tag)
-        #             x = sum(coords[::2]) / (len(coords) // 2)
-        #             y = sum(coords[1::2]) / (len(coords) // 2)
-        #             print(f"Simulating road click at: ({x}, {y})")
-        #             self.c.event_generate('<Button-1>', x=int(x), y=int(y))
-
-        #         # Update game turn
-        #         self.game.turn += 1
-        #         self.game.round = self.game.turn // len(self.game.players)
-        #     else:
-        #         nextTurn()
-        
 
         def enterRoll(event,tag):
             if not self.freeze and not self.rolled:
@@ -826,100 +766,99 @@ class Visualize:
         c.scale("all", 0, 0, scale_factor, scale_factor)
 
         root.mainloop()
+
         
     def handleBotAction(self):
         """Trigger a bot's action and visually simulate it."""
         if isinstance(self.game.current_player, Robot) and not self.freeze:
+            action = self.game.current_player.take_action(self.game)
+            print(f"Bot Action: {action}")
 
-<<<<<<< Updated upstream
-            if self.game.round == 1:
-                actions = self.game.current_player.get_available_actions(self.game)
-                settlement_actions = [action for action in actions if action[0] == 'settlement']
-=======
-            if self.game.round < 2:
-                actions = self.game.current_player.get_valid_actions(self.game)
-                settlement_actions = [action for action in actions if action[0] == 'settlement']
-                road_actions = [action for action in actions if action[0] == 'road']
->>>>>>> Stashed changes
+            if action[0] == 'no_action':
+                print("No valid actions available for bot.")
+                return  # Skip if no valid action
 
-                if settlement_actions:
-                    action = settlement_actions[0]  # Choose the first available settlement action
-                    print(f"Bot First Round Settlement Action: {action}")
-
-                    # Simulate settlement placement
+            try:
+                if action[0] == 'settlement':
+                    # Simulate clicking a settlement
                     tag = next(k for k, v in self.settlements_to_vertices.items() if v == action[1])
                     coords = self.c.coords(tag)
                     x = sum(coords[::2]) / (len(coords) // 2)
                     y = sum(coords[1::2]) / (len(coords) // 2)
                     print(f"Simulating settlement click at: ({x}, {y})")
                     self.c.event_generate('<Button-1>', x=int(x), y=int(y))
-<<<<<<< Updated upstream
-=======
-                
-                if road_actions:
-                    action = settlement_actions[0]  # Choose the first available settlement action
-                    print(f"Bot First Round Settlement Action: {action}")
+                elif action[0] == 'road':
+                    # Simulate clicking a road
                     tag = next(k for k, v in self.roads_to_edges.items() if v == action[1])
                     coords = self.c.coords(tag)
                     x = sum(coords[::2]) / (len(coords) // 2)
                     y = sum(coords[1::2]) / (len(coords) // 2)
                     print(f"Simulating road click at: ({x}, {y})")
                     self.c.event_generate('<Button-1>', x=int(x), y=int(y))
->>>>>>> Stashed changes
-
-                    # Update the game state to reflect the bot's action
-                    self.game.buySettlement(self.game.current_player.name, action[1])
-                    self.updateHand()
-                    self.updateDevs()
-                else:
-                    print("No valid settlement actions available for bot.")
-                
-            else:
-                action = self.game.current_player.take_action(self.game)
-                print(f"Bot Action: {action}")
-                if action[0] == 'no_action':
-                    print("No valid actions available for bot.")
-                    return  # Skip if no valid action
-            
-                try:
-                    if action[0] == 'settlement':
-                        tag = next(k for k, v in self.settlements_to_vertices.items() if v == action[1])
-                        coords = self.c.coords(tag)
-                        x = sum(coords[::2]) / (len(coords) // 2)
-                        y = sum(coords[1::2]) / (len(coords) // 2)
-                        print(f"Simulating settlement click at: ({x}, {y})")
-                        self.c.event_generate('<Button-1>', x=int(x), y=int(y))
-                    elif action[0] == 'road':
-                        tag = next(k for k, v in self.roads_to_edges.items() if v == action[1])
-                        coords = self.c.coords(tag)
-                        x = sum(coords[::2]) / (len(coords) // 2)
-                        y = sum(coords[1::2]) / (len(coords) // 2)
-                        print(f"Simulating road click at: ({x}, {y})")
-                        self.c.event_generate('<Button-1>', x=int(x), y=int(y))
-                    elif action[0] == 'city':
-                        tag = next(k for k, v in self.cities_to_vertices.items() if v == action[1])
-                        coords = self.c.coords(tag)
-                        x = sum(coords[::2]) / (len(coords) // 2)
-                        y = sum(coords[1::2]) / (len(coords) // 2)
-                        print(f"Simulating city click at: ({x}, {y})")
-                        self.c.event_generate('<Button-1>', x=int(x), y=int(y))
-                    elif action[0] == 'dev_card':
-                        dev_card_tag = self.devs['dev_card']
-                        print("Simulating dev card purchase.")
-                        self.c.event_generate('<Button-1>', widget=dev_card_tag)
+                elif action[0] == 'city':
+                    # Simulate clicking a city
+                    tag = next(k for k, v in self.cities_to_vertices.items() if v == action[1])
+                    coords = self.c.coords(tag)
+                    x = sum(coords[::2]) / (len(coords) // 2)
+                    y = sum(coords[1::2]) / (len(coords) // 2)
+                    print(f"Simulating city click at: ({x}, {y})")
+                    self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+                elif action[0] == 'trade_in':
+                    print("The Bot is trading in resources.")
+                    most_resource = max(self.hand, key=self.hand.get)
+                    least_resource = min(self.hand, key=self.hand.get)
+                    print(f"Bot chooses to trade {least_resource} for {most_resource} ")
+                    self.tradeWindow()
+                elif action[0] == 'dev_card':
+                    # Simulate buying a development card
+                    dev_card_tag = self.devs['dev_card']
+                    print("Simulating dev card purchase.")
+                    self.c.event_generate('<Button-1>', widget=dev_card_tag)
+                elif action[0] == 'use_dev_card':
+                    # Simulate using a development card
+                    if action[1] == 'knight':
+                        print("Simulating knight card action.")
+                        coords = self.c.bbox(self.devs['knight'])
+                        self.c.event_generate('<Button-1>', x=(coords[0] + coords[2]) // 2, y=(coords[1] + coords[3]) // 2)
+                        catan_tiles = [
+                        (6, 'wood'), (8, 'brick'), (2, 'grain'), (5, 'brick'),
+                        (4, 'wood'), (5, 'ore'), (9, 'grain'), (4, 'brick'),
+                        (9, 'sheep'), (11, 'wood'), (10, 'sheep'), (3, 'wood'),
+                        (6, 'ore'), (8, 'grain'), (12, 'sheep'), (3, 'ore'),
+                        (10, 'sheep'), (11, 'grain')
+                    ]
+                        random_tile = random.choice(catan_tiles)
+                        print(f"Random tile chosen: Number {random_tile[0]} with resource {random_tile[1]}")
+                    elif action[1] == 'monopoly':
+                        print("Simulating monopoly card action.")
+                        coords = self.c.bbox(self.devs['monopoly'])
+                        self.c.event_generate('<Button-1>', x=(coords[0] + coords[2]) // 2, y=(coords[1] + coords[3]) // 2)
+                        least_resource = min(self.hand, key=self.hand.get)
+                        print(f"Bot chooses {least_resource} as the monopoly resource.")
+                    elif action[1] == 'road_builder':
+                        coords = self.c.bbox(self.devs['road_builder'])
+                    elif action[1] == 'year_of_plenty':
+                        coords = self.c.bbox(self.devs['year_of_plenty'])
+                        least_resource1 = min(self.hand, key=self.hand.get)
+                        least_resource2 = min(self.hand, key=self.hand.get)
+                        print(f"Bot chooses {least_resource1} and {least_resource2} as its Year of Plenty resource.")
                     else:
-                        print("Invalid action.")
-                except Exception as e:
-                    print(f"Error in handleBotAction: {e}")
-<<<<<<< Updated upstream
+                        print("Invalid dev card action.")
+                        return
 
-                self.updateHand()
-                self.updateDevs()
-=======
->>>>>>> Stashed changes
+                    # Calculate center of the button for accurate event generation
+                    x = (coords[0] + coords[2]) / 2
+                    y = (coords[1] + coords[3]) / 2
+                    print(f"Simulating use of {action[1]} card at: ({x}, {y})")
+                    self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+                else:
+                    print("Invalid action.")
+            except Exception as e:
+                print(f"")
 
-                self.updateHand()
-                self.updateDevs()
+            self.updateHand()
+            self.updateDevs()
+
 
     #Reflects changes in hand after any transaction or at beginning of turn
     def updateHand(self):

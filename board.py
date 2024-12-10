@@ -132,6 +132,20 @@ class Board:
                     self.availableVertices[el[1][0]][el[1][1]] = False
                 else:
                     self.availableVertices[el[0][0]][el[0][1]] = False
+    # In board.py
+
+    def tiles_adjacent_to_vertex(self, vertex):
+        """
+        Returns the tiles adjacent to a given vertex.
+        :param vertex: Tuple representing the vertex (i, j).
+        :return: List of tile objects adjacent to the vertex.
+        """
+        adjacent_tiles = []
+        for tile_id, tile in self.spots.items():
+            if vertex in tile.vertices:
+                adjacent_tiles.append(tile)
+        return adjacent_tiles
+
 
 
 class Vertex:

@@ -1,0 +1,9 @@
+This is our final project for AI 481
+
+All you have to do is run from main.py and press start game to begin a game with 2 players and 1 bot. 
+There must be at least 3 players and can be as many bots, to make a bot player just put "bot" in their name and no need for a color
+
+Known Issues:
+If a bot is the first player you may have to do their set up for them
+
+The road builder dev card does not work mulitple times for bots
