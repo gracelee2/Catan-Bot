@@ -157,4 +157,8 @@ class Robot(Player):
     #     if road_actions:
     #         road_action = road_actions[0]  # Choose the first valid road action
     #         game.buyRoad(self.name, road_action[1])
+<<<<<<< Updated upstream
     #         print(f"{self.name} placed a road at {road_action[1]}.")
+=======
+    #         print(f"{self.name} placed a road at {road_action[1]}.")
+>>>>>>> Stashed changes

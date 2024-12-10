@@ -439,6 +439,7 @@ class Visualize:
                     Seven.rolled(self, self.game.players)
 
                 self.updateHand()
+<<<<<<< Updated upstream
                 self.game.availableMoves()
 
         # def handleFirstRoundSetup():
@@ -450,6 +451,15 @@ class Visualize:
         #         actions = self.game.current_player.get_valid_actions(self.game)
         #         settlement_action = next((a for a in actions if a[0] == 'settlement'), None)
         #         road_action = next((a for a in actions if a[0] == 'road'), None)
+=======
+                self.handleBotAction()
+
+                if self.game.dieRoll == 7:
+                    Seven.rolled(self, self.game.players)
+
+                self.updateHand()
+                self.game.availableMoves()
+>>>>>>> Stashed changes
 
         #         # Simulate settlement placement
         #         if settlement_action:
@@ -821,9 +831,16 @@ class Visualize:
         """Trigger a bot's action and visually simulate it."""
         if isinstance(self.game.current_player, Robot) and not self.freeze:
 
+<<<<<<< Updated upstream
             if self.game.round == 1:
                 actions = self.game.current_player.get_available_actions(self.game)
                 settlement_actions = [action for action in actions if action[0] == 'settlement']
+=======
+            if self.game.round < 2:
+                actions = self.game.current_player.get_valid_actions(self.game)
+                settlement_actions = [action for action in actions if action[0] == 'settlement']
+                road_actions = [action for action in actions if action[0] == 'road']
+>>>>>>> Stashed changes
 
                 if settlement_actions:
                     action = settlement_actions[0]  # Choose the first available settlement action
@@ -836,6 +853,19 @@ class Visualize:
                     y = sum(coords[1::2]) / (len(coords) // 2)
                     print(f"Simulating settlement click at: ({x}, {y})")
                     self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+<<<<<<< Updated upstream
+=======
+                
+                if road_actions:
+                    action = settlement_actions[0]  # Choose the first available settlement action
+                    print(f"Bot First Round Settlement Action: {action}")
+                    tag = next(k for k, v in self.roads_to_edges.items() if v == action[1])
+                    coords = self.c.coords(tag)
+                    x = sum(coords[::2]) / (len(coords) // 2)
+                    y = sum(coords[1::2]) / (len(coords) // 2)
+                    print(f"Simulating road click at: ({x}, {y})")
+                    self.c.event_generate('<Button-1>', x=int(x), y=int(y))
+>>>>>>> Stashed changes
 
                     # Update the game state to reflect the bot's action
                     self.game.buySettlement(self.game.current_player.name, action[1])
@@ -881,10 +911,15 @@ class Visualize:
                         print("Invalid action.")
                 except Exception as e:
                     print(f"Error in handleBotAction: {e}")
+<<<<<<< Updated upstream
 
                 self.updateHand()
                 self.updateDevs()
+=======
+>>>>>>> Stashed changes
 
+                self.updateHand()
+                self.updateDevs()
 
     #Reflects changes in hand after any transaction or at beginning of turn
     def updateHand(self):
