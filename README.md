@@ -1,6 +1,6 @@
 # catan
 
-The goal of this project is to create an AI for playing Catan. This initial version does not yet support an AI but can be used to play  3-4 person games of Catan. Simply download the repostiory and run using python main.py.
+The goal of this project is to create an AI for playing Catan. Uses AI models powered by Aplaha-Beta pruning decisions making to simulate player slots in 3-4 person games of Catan. Simply download the repostiory and run using python main.py.
 
 
 ![Demo](/gifs/game_play.gif)
